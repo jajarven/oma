@@ -4,6 +4,9 @@ https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
 crypto solver, kokeilla jos ei vaiks rot13 löydä:
 https://quipqiup.com/
 
+Katso täältä hashet md5 yms
+https://hashes.org/
+
 täältä löytyy scripti millä saa ajettua gdb ja normaali samoilla env arvoilla(toimii sama exploit gdb:ssä ja ulkona siitä)
 https://stackoverflow.com/questions/17775186/buffer-overflow-works-in-gdb-but-not-without-it/17775966#17775966
 

